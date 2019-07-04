@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:jaxws="http://cxf.apache.org/jaxws"
+	xsi:schemaLocation="  
+         http://www.springframework.org/schema/beans 
+         http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+         http://cxf.apache.org/jaxws 
+         http://cxf.apache.org/schemas/jaxws.xsd">
+
+	<!-- <jaxws:endpoint id="productPort " implementor="com.sungeon.bos.control.Product" 
+		address="/ProductPort" /> -->
+	<!-- <jaxws:endpoint id="vipPort " implementor="com.sungeon.bos.control.VIP" 
+		address="/VIPPort" /> -->
+	<!-- <jaxws:endpoint id="ticketPort " implementor="com.sungeon.bos.control.Ticket" 
+		address="/TicketPort" /> -->
+	<!-- <jaxws:endpoint id="eOrderPort " implementor="com.sungeon.bos.control.EOrder" 
+		address="/EOrderPort" /> -->
+	<!--<jaxws:endpoint id="purchasePort " implementor="com.sungeon.bos.control.Purchase" -->
+	<!--address="/PurchasePort" /> -->
+	<!--<jaxws:endpoint id="supplierPort " implementor="com.sungeon.bos.control.Supplier" -->
+	<!--address="/SupplierPort" /> -->
+	<!--<jaxws:endpoint id="storeGoodsPort " implementor="com.sungeon.bos.control.StoreGoods" -->
+	<!--address="/StoreGoodsPort" /> -->
+
+	<bean id="inMessageInterceptor" class="org.apache.cxf.interceptor.LoggingInInterceptor" />
+	<bean id="outLoggingInterceptor" class="org.apache.cxf.interceptor.LoggingOutInterceptor" />
+
+	<jaxws:server id="productPort" serviceClass="com.sungeon.bos.port.Product"
+		address="/ProductPort">
+		<jaxws:serviceBean>
+			<ref bean="product" />
+		</jaxws:serviceBean>
+		<jaxws:inInterceptors>
+			<ref bean="inMessageInterceptor" />
+		</jaxws:inInterceptors>
+		<jaxws:outInterceptors>
+			<ref bean="outLoggingInterceptor" />
+		</jaxws:outInterceptors>
+	</jaxws:server>
+
+	<jaxws:server id="vipPort" serviceClass="com.sungeon.bos.port.VIP"
+		address="/VIPPort">
+		<jaxws:serviceBean>
+			<ref bean="vip" />
+		</jaxws:serviceBean>
+		<jaxws:inInterceptors>
+			<ref bean="inMessageInterceptor" />
+		</jaxws:inInterceptors>
+		<jaxws:outInterceptors>
+			<ref bean="outLoggingInterceptor" />
+		</jaxws:outInterceptors>
+	</jaxws:server>
+
+	<jaxws:server id="ticketPort" serviceClass="com.sungeon.bos.port.Ticket"
+		address="/TicketPort">
+		<jaxws:serviceBean>
+			<ref bean="ticket" />
+		</jaxws:serviceBean>
+		<jaxws:inInterceptors>
+			<ref bean="inMessageInterceptor" />
+		</jaxws:inInterceptors>
+		<jaxws:outInterceptors>
+			<ref bean="outLoggingInterceptor" />
+		</jaxws:outInterceptors>
+	</jaxws:server>
+
+	<jaxws:server id="orderPort" serviceClass="com.sungeon.bos.port.Order"
+		address="/OrderPort">
+		<jaxws:serviceBean>
+			<ref bean="order" />
+		</jaxws:serviceBean>
+		<jaxws:inInterceptors>
+			<ref bean="inMessageInterceptor" />
+		</jaxws:inInterceptors>
+		<jaxws:outInterceptors>
+			<ref bean="outLoggingInterceptor" />
+		</jaxws:outInterceptors>
+	</jaxws:server>
+
+	<jaxws:server id="retailPort" serviceClass="com.sungeon.bos.port.Retail"
+		address="/RetailPort">
+		<jaxws:serviceBean>
+			<ref bean="retail" />
+		</jaxws:serviceBean>
+		<jaxws:inInterceptors>
+			<ref bean="inMessageInterceptor" />
+		</jaxws:inInterceptors>
+		<jaxws:outInterceptors>
+			<ref bean="outLoggingInterceptor" />
+		</jaxws:outInterceptors>
+	</jaxws:server>
+	
+	<jaxws:server id="testPort" serviceClass="com.sungeon.bos.port.Test"
+		address="/TestPort">
+		<jaxws:serviceBean>
+			<ref bean="test" />
+		</jaxws:serviceBean>
+		<jaxws:inInterceptors>
+			<ref bean="inMessageInterceptor" />
+		</jaxws:inInterceptors>
+		<jaxws:outInterceptors>
+			<ref bean="outLoggingInterceptor" />
+		</jaxws:outInterceptors>
+	</jaxws:server>
+
+</beans>

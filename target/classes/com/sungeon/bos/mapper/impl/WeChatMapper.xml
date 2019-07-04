@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sungeon.bos.mapper.IWeChatMapper">
+
+	<select id="queryWeChatMessagePropel" resultType="WeChatMessage">
+		SELECT t.id, t.evipid, t.message
+		FROM e_third_message t
+		WHERE t.is_propel = 0
+		<if test="brand != null and brand != ''">
+	 		AND t.brand = #{brand}
+	 	</if>
+	 	<if test="brand == null or brand == ''">
+	 		AND t.brand IS NULL
+	 	</if>
+		AND rownum <![CDATA[ <= #{count} ]]>
+	</select>
+	
+	<update id="updateWeChatMessagePropelStatus">
+		UPDATE e_third_message t
+		SET t.is_propel = 1, t.propel_time = SYSDATE
+		WHERE t.id IN
+		<foreach item="wx" index="index" collection="lists"
+				open="(" separator="," close=")">
+			#{wx.id, javaType=Integer, jdbcType=INTEGER}		
+		</foreach>
+	</update>
+	
+</mapper>

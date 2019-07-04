@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<settings>
+		<setting name="cacheEnabled" value="false" />
+	</settings>
+	<typeAliases>
+		<package name="com.sungeon.bos.entity" />
+	</typeAliases>
+	<mappers>
+		<!-- <package name="com.sungeon.bos.mapper.impl" /> -->
+		<mapper resource="com/sungeon/bos/mapper/impl/BaseMapper.xml" />
+		<mapper resource="com/sungeon/bos/mapper/impl/ProductMapper.xml" />
+		<mapper resource="com/sungeon/bos/mapper/impl/VIPMapper.xml" />
+		<mapper resource="com/sungeon/bos/mapper/impl/TicketMapper.xml" />
+		<mapper resource="com/sungeon/bos/mapper/impl/OrderMapper.xml" />
+		<!--<mapper resource="com/sungeon/bos/mapper/impl/PurchaseMapper.xml" /> -->
+		<!--<mapper resource="com/sungeon/bos/mapper/impl/StoreGoodsMapper.xml" 
+			/> -->
+		<!--<mapper resource="com/sungeon/bos/mapper/impl/SupplierMapper.xml" /> -->
+		<!--<mapper resource="com/sungeon/bos/mapper/impl/RetailMapper.xml" /> -->
+		<mapper resource="com/sungeon/bos/mapper/impl/WeChatMapper.xml" />
+	</mappers>
+</configuration>

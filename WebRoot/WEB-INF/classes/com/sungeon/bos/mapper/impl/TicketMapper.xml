@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sungeon.bos.mapper.ITicketMapper">
+
+	<insert id="insertTicketBatch" parameterType="List">
+		INSERT INTO e_third_ticket(id, creationdate, ticketno, parvalue, 
+		datebeg, dateend, remark, quovalue, status, giventime, SOURCE, 
+		TYPE, category, NAME, verifystore, verifytime, verifyremark,
+		eticketid, evipid, brand)
+		<foreach item="tic" index="index" collection="list"
+			separator="UNION ALL">
+			SELECT get_sequences('e_third_ticket'), SYSDATE, 
+			#{tic.ticket_no, javaType=String, jdbcType=VARCHAR}, 
+			#{tic.ticket_amount, javaType=Double, jdbcType=NUMERIC},
+			#{tic.ticket_time_effect, javaType=String, jdbcType=VARCHAR},
+			#{tic.ticket_time_invalid, javaType=String, jdbcType=VARCHAR},
+			#{tic.ticket_note, javaType=String, jdbcType=VARCHAR},
+			#{tic.ticket_meet_amount, javaType=Double, jdbcType=NUMERIC},
+			#{tic.ticket_status, javaType=String, jdbcType=VARCHAR},
+			#{tic.ticket_time_given, javaType=String, jdbcType=VARCHAR},
+			#{tic.ticket_source, javaType=String, jdbcType=VARCHAR},
+			#{tic.ticket_type, javaType=String, jdbcType=VARCHAR},
+			#{tic.ticket_category, javaType=String, jdbcType=VARCHAR},
+			#{tic.ticket_name, javaType=String, jdbcType=VARCHAR},
+			#{tic.ticket_store_code, javaType=String, jdbcType=VARCHAR},
+			#{tic.ticket_time_verified, javaType=String, jdbcType=INTEGER},
+			#{tic.ticket_verified_note, javaType=String, jdbcType=VARCHAR},
+			#{tic.ticket_id, javaType=Integer, jdbcType=INTEGER},
+			#{tic.ticket_user_id, javaType=Integer, jdbcType=INTEGER}, 
+			#{brand, javaType=String, jdbcType=VARCHAR} FROM dual
+		</foreach>
+	</insert>
+	
+	<select id="executePThirdTicket" statementType="CALLABLE">
+		{call p_deal_e_third_ticket(#{brand, mode=IN})}
+	</select>
+	
+	<select id="queryTicketPropel" resultType="Ticket">
+		SELECT t.id, t.ticketno, t.checkno, t.name, t.parvalue, 
+			to_date(t.datebeg,'yyyy-mm-dd hh24:mi:ss') AS datebeg,
+		    to_date(t.dateend,'yyyy-mm-dd hh24:mi:ss') AS dateend, 
+		    t.creationdate AS giventime, t.remark AS note, t.verifyed AS isverify, 
+		    to_date(t.verifydate,'yyyy-mm-dd,hh24:mi:ss') AS verifytime, 
+		    t.quovalue AS amount, p.evipid AS vipid 
+		FROM tdefticket t, c_client_vip p
+	  	WHERE t.c_vip_id = p.id
+	  	AND p.evipid IS NOT NULL
+	  	AND t.is_fromonline = 0
+	  	AND t.ispropel = 0
+	  	AND t.isactive = 'Y'
+	  	AND t.verifyed = 'N'
+	  	<if test="brand != null and brand != ''">
+	 		AND p.brand = #{brand}
+	 	</if>
+	 	<if test="brand == null or brand == ''">
+	 		AND p.brand IS NULL
+	 	</if>
+	    AND rownum <![CDATA[ <= #{count}]]>
+	</select> 
+	
+	<update id="updateTicketPropelStatus">
+		UPDATE tdefticket t SET t.ispropel = 1
+		WHERE t.id in
+		<foreach item="ticket" index="index" collection="tickets"
+				open="(" separator="," close=")">
+			#{ticket.ticket_id, javaType=Integer, jdbcType=INTEGER}
+		</foreach>
+	</update>
+	
+	<select id="queryVerifiedTicketPropel" resultType="Ticket">
+		SELECT t.id, t.ticketno FROM tdefticket t
+		WHERE t.verifyed = 'Y' AND t.is_verifyed_propel = 0 
+		<if test="brand != null and brand != ''">
+	 		AND t.brand = #{brand}
+	 	</if>
+	 	<if test="brand == null or brand == ''">
+	 		AND t.brand IS NULL
+	 	</if>
+		AND rownum <![CDATA[ <= #{count}]]>
+	</select>
+	
+	<update id="updateVerifiedTicketPropelStatus">
+		UPDATE tdefticket t SET t.is_verifyed_propel = 1 WHERE t.id IN
+		<foreach item="ticket" index="index" collection="tickets"
+				open="(" separator="," close=")">
+			#{ticket.ticket_id, javaType=Integer, jdbcType=INTEGER}
+		</foreach>
+	</update>
+
+</mapper>

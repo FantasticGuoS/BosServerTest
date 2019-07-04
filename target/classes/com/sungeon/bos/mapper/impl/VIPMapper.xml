@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sungeon.bos.mapper.IVIPMapper">
+
+	<select id="queryVIPIdByCardno" parameterType="String" resultType="Integer">
+		SELECT id FROM c_vip WHERE cardno = #{cardno}
+	</select>
+
+	<select id="queryVIP" resultType="VIP">
+		<if test="mobiles != null and mobiles.size() > 0">
+			SELECT t.id, t.evipid, t.cardno, t.vipname, t.pass_word AS password, t.mobil AS mobile,
+				 t.sex AS gender, t.birthday, t.email, p.name AS viptype, t.opencarddate AS opendate,
+				 f.integral, t.description
+			FROM c_vip t, c_viptype p, fa_vipacc f
+	 		WHERE t.c_viptype_id = p.id
+		 	AND t.id = f.c_vip_id
+		 	AND t.mobil IN
+		 	<foreach item="mobile" index="index" collection="mobiles"
+				open="(" separator="," close=")">
+				#{mobile, javaType=String, jdbcType=VARCHAR}
+			</foreach>
+		</if>
+		<if test="null == mobiles or mobiles.size() == 0">
+			SELECT h.*
+			FROM (SELECT rownum AS rn, w.*
+					 FROM (SELECT t.id, t.evipid, t.cardno, t.vipname, t.pass_word AS password,
+								 t.mobil AS mobile, t.sex AS gender, t.birthday, t.email,
+								 p.name AS viptype, t.opencarddate AS opendate, f.integral,
+								 t.description
+							FROM c_vip t, c_viptype p, fa_vipacc f
+							WHERE t.c_viptype_id = p.id
+							AND t.id = f.c_vip_id
+							ORDER BY t.modifieddate DESC) w) h
+ 			WHERE rn BETWEEN #{beg} AND #{end}
+		</if>
+	</select>
+	
+	<insert id="addVIPBatch" keyProperty="id">
+		INSERT INTO	c_client_vip(id, ad_client_id, ad_org_id, ownerid,
+		modifierid,	creationdate, modifieddate, isactive, cardno, mobil, sex,
+		c_viptype_id, c_store_id, c_customer_id, vipname, birthday,
+		pass_word, opencarddate, evipid, description)
+		<foreach item="vip" index="index" collection="list" separator="UNION ALL">
+			SELECT get_sequences('c_client_vip'), 37, 27, 893, 893,
+			SYSDATE, SYSDATE, 'Y', 
+			#{vip.cardno, javaType=String, jdbcType=VARCHAR}, 
+			#{vip.mobile, javaType=String, jdbcType=VARCHAR},
+			#{vip.gender, javaType=String, jdbcType=CHAR},
+			#{vip.viptype, javaType=String, jdbcType=INTEGER},
+			#{vip.store, javaType=String, jdbcType=INTEGER}, 
+			#{vip.customer, javaType=String, jdbcType=INTEGER},
+			#{param.vipname, javaType=String, jdbcType=VARCHAR},
+			#{param.birthday, javaType=Integer, jdbcType=INTEGER},
+			#{param.password, javaType=String, jdbcType=VARCHAR},
+			#{param.opendate, javaType=Integer, jdbcType=INTEGER},
+			#{param.evipid, javaType=Integer, jdbcType=INTEGER},
+			#{param.remark, javaType=String, jdbcType=VARCHAR} FROM dual
+		</foreach>
+	</insert>
+	
+	<insert id="insertVIPBatch">
+		INSERT INTO e_third_vip(id, creationdate, cardno, password, NAME, realname, nickname, 
+			sex, mobile, birthday, TYPE, typename, storeid, storecode, regtime, openid, avatar, 
+			evipid, pay_password, brand)
+		<foreach item="vip" index="index" collection="list" separator="UNION ALL">
+			SELECT get_sequences('e_third_vip'), SYSDATE,
+			#{vip.user_vip_card, javaType=String, jdbcType=VARCHAR},
+			#{vip.user_password, javaType=String, jdbcType=VARCHAR},
+			#{vip.user_name, javaType=String, jdbcType=VARCHAR},
+			#{vip.user_real_name, javaType=String, jdbcType=VARCHAR},
+			#{vip.user_nickname, javaType=String, jdbcType=VARCHAR}, 
+			#{vip.user_gender, javaType=String, jdbcType=CHAR},
+			#{vip.user_mobile_phone, javaType=String, jdbcType=VARCHAR},
+			#{vip.user_birthday, javaType=String, jdbcType=VARCHAR},
+			#{vip.user_rank_code, javaType=String, jdbcType=VARCHAR},
+			#{vip.user_rank_name, javaType=String, jdbcType=VARCHAR},
+			#{vip.user_store_id, javaType=String, jdbcType=VARCHAR},
+			#{vip.user_store_code, javaType=String, jdbcType=VARCHAR},
+			#{vip.user_time_created, javaType=String, jdbcType=VARCHAR}, 
+			#{vip.wechat_openid, javaType=String, jdbcType=VARCHAR}, 
+			#{vip.user_avatar, javaType=String, jdbcType=VARCHAR}, 
+			#{vip.user_id, javaType=Integer, jdbcType=INTEGER}, 
+			#{vip.user_pay_password, javaType=String, jdbcType=VARCHAR}, 
+			#{brand, javaType=String, jdbcType=VARCHAR} FROM dual
+		</foreach>
+	</insert>
+	
+	<select id="executePThirdVIP" statementType="CALLABLE">
+		{call p_deal_e_third_vip(#{brand, mode=IN})}
+	</select>
+	
+	<insert id="insertVIPIntegralFTPBatch">
+		INSERT INTO e_third_vip_integral_ftp(id, creationdate, integral_id, evipid, 
+			TYPE, amount, related, is_offline, thd_id, status, note, creator, modifier, 
+			time_created, time_modified, brand)
+		<foreach item="ftp" index="index" collection="list" separator="UNION ALL">
+			SELECT get_sequences('e_third_vip_integral_ftp'), SYSDATE, 
+			#{ftp.integral_id, javaType=Integer, jdbcType=INTEGER},
+			#{ftp.user_id, javaType=Integer, jdbcType=INTEGER},
+			#{ftp.type, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.amount, javaType=Double, jdbcType=NUMERIC}, 
+			#{ftp.related_code, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.is_offline, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.thd_id, javaType=Integer, jdbcType=INTEGER}, 
+			#{ftp.status, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.note, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.creator, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.modifier, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.time_created, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.time_modified, javaType=String, jdbcType=VARCHAR}, 
+			#{brand, javaType=String, jdbcType=VARCHAR} FROM dual
+		</foreach>
+	</insert>
+	
+	<select id="executePThirdVIPIntegralFTP" statementType="CALLABLE">
+		{call p_deal_e_third_vipintl_ftp(#{brand, mode=IN})}
+	</select>
+	
+	<insert id="insertVIPBalanceFTPBatch">
+		INSERT INTO e_third_vip_balance_ftp(id, creationdate, balance_id, user_id, 
+			code, amount, SOURCE, source_code, status, note, gateway_code, auditor_cs, 
+			auditor_fnc, canceler, creator, modifier, time_created, time_modified, 
+			time_acs, time_afnc, time_canceled, brand)
+		<foreach item="ftp" index="index" collection="list" separator="UNION ALL">
+			SELECT get_sequences('e_third_vip_balance_ftp'), SYSDATE, 
+			#{ftp.balance_id, javaType=Integer, jdbcType=INTEGER},
+			#{ftp.user_id, javaType=Integer, jdbcType=INTEGER},
+			#{ftp.code, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.amount, javaType=Double, jdbcType=NUMERIC}, 
+			#{ftp.source, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.source_code, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.status, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.note, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.gateway_code, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.auditor_cs, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.auditor_fnc, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.canceler, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.creator, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.modifier, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.time_created, javaType=String, jdbcType=VARCHAR}, 
+			#{ftp.time_modified, javaType=String, jdbcType=VARCHAR},
+			#{ftp.time_acs, javaType=String, jdbcType=VARCHAR},
+			#{ftp.time_afnc, javaType=String, jdbcType=VARCHAR},
+			#{ftp.time_canceled, javaType=String, jdbcType=VARCHAR}, 
+			#{brand, javaType=String, jdbcType=VARCHAR} FROM dual
+		</foreach>
+	</insert>
+	
+	<select id="executePThirdVIPBalanceFTP" statementType="CALLABLE">
+		{call p_deal_e_third_vipbalance_ftp(#{brand, mode=IN})}
+	</select>
+	
+	<select id="queryVIPPropel" resultType="VIP">
+		SELECT t.evipid AS id, t.cardno AS cardno, p.code AS viptype, 
+			t.vipname AS vipname, t.pass_word AS password, t.birthday AS birthday
+		FROM c_client_vip t, c_viptype p
+ 		WHERE t.c_viptype_id = p.id(+)
+	 	AND t.ispropel = 0
+	 	AND t.evipid IS NOT NULL
+	 	<if test="brand != null and brand != ''">
+	 		AND t.brand = #{brand}
+	 	</if>
+	 	<if test="brand == null or brand == ''">
+	 		AND t.brand IS NULL
+	 	</if>
+	 	AND rownum <![CDATA[ <= #{count} ]]>
+	</select>
+	
+	<update id="updateVIPPropelStatus">
+		UPDATE c_client_vip t SET t.ispropel = 1 WHERE t.evipid IN
+		<foreach item="vip" index="index" collection="vips"
+				open="(" separator="," close=")">
+			#{vip.user_id, javaType=Integer, jdbcType=INTEGER}
+		</foreach>
+	</update>
+	
+	<select id="queryVIPAccountPropel" resultType="VIPAccount">
+		SELECT t.id, p.evipid, t.integral, t.amount AS balance
+		FROM fa_vipacc t, c_client_vip p
+		WHERE t.c_vip_id = p.id
+		<if test="type == 'I'.toString()">
+			AND t.is_integral_propel = 0
+		</if>
+		<if test="type == 'B'.toString()">
+			AND t.is_balance_propel = 0
+		</if>
+	 	AND p.evipid IS NOT NULL
+	 	<if test="brand != null and brand != ''">
+	 		AND p.brand = #{brand}
+	 	</if>
+	 	<if test="brand == null or brand == ''">
+	 		AND p.brand IS NULL
+	 	</if>
+	 	AND rownum <![CDATA[ <= #{count} ]]>
+	</select>
+	
+	<update id="updateVIPAccountPropelStatus">
+		UPDATE fa_vipacc T
+		<if test="type == 'I'.toString()">
+			SET t.is_integral_propel = 1
+		</if>
+		<if test="type == 'B'.toString()">
+			SET t.is_balance_propel = 1
+		</if>
+		WHERE t.id IN
+		<foreach item="acc" index="index" collection="accounts"
+				open="(" separator="," close=")">
+			#{acc.id, javaType=Integer, jdbcType=INTEGER}
+		</foreach>
+	</update>
+	
+	<resultMap type="VIPExpenses" id="VIPExpensesMap">
+		<id property="id" column="id" />
+		<result property="evipid" column="evipid" />
+		<result property="docno" column="docno" />
+		<result property="billdate" column="billdate" />
+		<result property="storecode" column="storecode" />
+		<result property="storename" column="storename" />
+		<result property="storeaddress" column="storeaddress" />
+		<result property="storemobil" column="storemobil" />
+		<result property="storephone" column="storephone" />
+		<result property="totamtlist" column="totamtlist" />
+		<result property="totamtactual" column="totamtactual" />
+		<result property="modifieddate" column="modifieddate" />
+		<result property="remark" column="remark" />
+		<collection property="items" ofType="Item">
+			<result property="product" column="product" />
+			<result property="productname" column="productname" />
+			<result property="sku" column="sku" />
+			<result property="qty" column="qty" />
+			<result property="pricelist" column="pricelist" />
+			<result property="price" column="price" />
+			<result property="pricelist" column="pricelist" />
+			<result property="discount" column="discount" />
+			<result property="colorname" column="colorname" />
+			<result property="sizename" column="sizename" />
+		</collection>
+	</resultMap>
+	
+	<select id="queryVIPExpensesPropel" resultMap="VIPExpensesMap">
+		SELECT t.id, t.evipid, t.docno, t.billdate, t.storename, t.storeaddress,
+			t.storemobil, t.storephone, t.totamtlist, t.totamtactual, t.remark, c.product, 
+			c.productname, c.sku, c.qty, c.pricelist, c.price, c.discount, c.colorname, 
+			c.sizename, t.statustime AS modifieddate
+		FROM e_third_vipconsume_ftp t, e_third_vipconsume_ftpitem c
+		WHERE t.id = c.parent_id
+		AND t.is_propel = 0 
+		<if test="brand != null and brand != ''">
+	 		AND t.brand = #{brand}
+	 	</if>
+	 	<if test="brand == null or brand == ''">
+	 		AND t.brand IS NULL
+	 	</if>
+		AND rownum <![CDATA[ <= #{count} ]]>
+	</select>
+	
+	<update id="updateVIPExpensesPropelStatus">
+		UPDATE e_third_vipconsume_ftp t
+		SET t.is_propel = 1, t.propel_time = SYSDATE
+		WHERE t.id IN
+		<foreach item="exp" index="index" collection="exps"
+				open="(" separator="," close=")">
+			#{exp.id, javaType=Integer, jdbcType=INTEGER}
+		</foreach>
+	</update>
+	
+	<select id="queryVIPAccountFTPPropel" resultType="VIPAccount">
+		SELECT f.id, t.evipid, f.integral AS integral, f.vip_payamt AS balance,
+			 f.changdate AS changedate, f.integral_change_type AS integraltype,
+			 f.balance_change_type AS balancetype, f.docno
+		FROM FA_VIPINTEGRAL_FTP f, c_client_vip t
+ 		WHERE f.c_vip_id = t.id
+	 	AND t.evipid IS NOT NULL
+	 	<if test="type == 'I'.toString()">
+	 		AND f.integral <![CDATA[ <> 0 ]]>
+	 		AND f.is_integral_propel = 0
+	 	</if>
+		<if test="type == 'B'.toString()">
+	 		AND f.vip_payamt <![CDATA[ <> 0 ]]>
+	 		AND f.is_balance_propel = 0
+	 	</if>
+	 	AND f.online_id IS NULL
+	 	<if test="brand != null and brand != ''">
+	 		AND t.brand = #{brand}
+	 	</if>
+	 	<if test="brand == null or brand == ''">
+	 		AND t.brand IS NULL
+	 	</if>
+	 	AND rownum <![CDATA[ <= #{count} ]]>
+	</select>
+	
+	<update id="updateVIPAccountFTPPropelStatus">
+		UPDATE FA_VIPINTEGRAL_FTP T
+		<if test="type == 'I'.toString()">
+			SET t.is_integral_propel = 1
+		</if>
+		<if test="type == 'B'.toString()">
+			SET t.is_balance_propel = 1
+		</if>
+		WHERE t.id IN
+		<foreach item="acc" index="index" collection="accounts"
+				open="(" separator="," close=")">
+			#{acc.id, javaType=Integer, jdbcType=INTEGER}
+		</foreach>
+	</update>
+	
+</mapper>

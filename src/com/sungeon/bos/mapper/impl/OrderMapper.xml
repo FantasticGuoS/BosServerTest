@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sungeon.bos.mapper.IOrderMapper">
+
+	<insert id="insertOrderBatch">
+		INSERT INTO e_third_order(id, creationdate, docno, evipid, created_time, CONSIGNEE, 
+			mobile, street, postscript, shipping_name, TOT_AMT_LIST, TICKET_MONEY, TICKET_NO, 
+			CARD_MONEY, USE_INTEGRAL, INTEGRAL_CHANGE_MONEY, payway, paymoney, SUCCESS_TIME, 
+			PROVINCE, CITY, DISTRICT, ADDRESS, shipping_fee, source_code, delivery_code, brand)
+		 <foreach item="order" index="index" collection="list" separator="UNION ALL">
+			SELECT get_sequences('e_third_order'), SYSDATE, 
+			#{order.trade_code, javaType=String, jdbcType=VARCHAR}, 
+			#{order.fk_member_id, javaType=Integer, jdbcType=INTEGER}, 
+			#{order.trade_time_created, javaType=String, jdbcType=VARCHAR}, 
+			#{order.trade_consignee, javaType=String, jdbcType=VARCHAR}, 
+			#{order.trade_mobile, javaType=String, jdbcType=VARCHAR}, 
+			#{order.trade_street, javaType=String, jdbcType=VARCHAR}, 
+			#{order.trade_note_buyer, javaType=String, jdbcType=VARCHAR}, 
+			#{order.trade_distrtype_name, javaType=String, jdbcType=VARCHAR}, 
+			#{order.trade_amount_payable, javaType=Double, jdbcType=NUMERIC}, 
+			#{order.trade_amount_offset_coupon, javaType=Double, jdbcType=NUMERIC}, 
+			#{order.trade_coupon_sn, javaType=String, jdbcType=VARCHAR}, 
+			#{order.trade_amount_offset_balance, javaType=Double, jdbcType=NUMERIC}, 
+			#{order.trade_integral, javaType=Double, jdbcType=NUMERIC}, 
+			#{order.trade_amount_offset_integral, javaType=Double, jdbcType=NUMERIC}, 
+			#{order.trade_payment_code, javaType=Double, jdbcType=NUMERIC}, 
+			#{order.trade_amount_online, javaType=Double, jdbcType=NUMERIC}, 
+			#{order.trade_time_pay, javaType=String, jdbcType=VARCHAR},
+			#{order.trade_province, javaType=String, jdbcType=VARCHAR}, 
+			#{order.trade_city, javaType=String, jdbcType=VARCHAR}, 
+			#{order.trade_district, javaType=String, jdbcType=VARCHAR},
+			#{order.trade_towns, javaType=String, jdbcType=VARCHAR}, 
+			#{order.trade_amount_delivery, javaType=Double, jdbcType=NUMERIC},
+			#{order.trade_source_store,javaType=String, jdbcType=VARCHAR}, 
+			#{order.trade_delivery_store,javaType=String, jdbcType=VARCHAR},
+			#{brand, javaType=String, jdbcType=VARCHAR} FROM dual
+		</foreach>
+	</insert>
+	
+	<insert id="insertOrderitemBatch">
+		INSERT INTO e_third_orderitem
+		(id, creationdate, docno, sku, qty, market_price, price, sourceid, brand)
+		<foreach item="item" index="index" collection="items" separator="UNION ALL">
+			SELECT get_sequences('e_third_orderitem'), SYSDATE, 
+			#{tradecode, javaType=String, jdbcType=VARCHAR}, 
+			#{item.sku_code, javaType=String, jdbcType=VARCHAR}, 
+			#{item.item_num, javaType=Integer, jdbcType=INTEGER}, 
+			#{item.item_price_trade, javaType=Double, jdbcType=NUMERIC}, 
+			#{item.item_amount_subtotal, javaType=Double, jdbcType=NUMERIC}, 
+			#{item.trade_item_id, javaType=Integer, jdbcType=INTEGER}, 
+			#{brand, javaType=String, jdbcType=VARCHAR} FROM dual
+		</foreach>
+	</insert>
+	
+	<select id="executePThirdOrder" statementType="CALLABLE">
+		{call p_deal_e_third_order(#{brand, mode=IN})}
+	</select>
+	
+	<insert id="insertBackOrderBatch">
+		INSERT INTO e_third_ret_order
+		(id, creationdate, retorderdocno, type, created_time, evipid, docno, invoice_no,
+		tot_amt_actual, eback_card_money, eback_payway, eback_money, eback_audit_time, 
+		remark, brand)
+		<foreach item="order" index="index" collection="list"
+			separator="UNION ALL">
+			SELECT get_sequences('e_third_ret_order'), SYSDATE, 
+			#{order.after_code, javaType=String, jdbcType=VARCHAR}, 
+			#{order.after_type, javaType=String, jdbcType=VARCHAR}, 
+			#{order.trade_time_created, javaType=String, jdbcType=VARCHAR}, 
+			#{order.fk_user_id, javaType=Integer, jdbcType=INTEGER}, 
+			#{order.trade_code, javaType=String, jdbcType=VARCHAR}, 
+			#{order.after_logistic_code, javaType=String, jdbcType=VARCHAR}, 
+			#{order.after_amount_pay, javaType=Double, jdbcType=NUMERIC}, 
+			#{order.after_amount_balance, javaType=Double, jdbcType=NUMERIC}, 
+			#{order.trade_payment_code, javaType=String, jdbcType=VARCHAR}, 
+			#{order.after_amount_online, javaType=Double, jdbcType=NUMERIC}, 
+			#{order.after_time_audit, javaType=String, jdbcType=VARCHAR}, 
+			#{order.after_remark, javaType=String, jdbcType=VARCHAR}, 
+			#{brand, javaType=String, jdbcType=VARCHAR} FROM dual
+		</foreach>
+	</insert>
+	
+	<insert id="insertBackOrderitemBatch">
+		INSERT INTO e_third_ret_orderitem(id, creationdate, docno, sku, qty, 
+			price, pricelist, retorderdocno, orderitemsourceid, brand)
+		<foreach item="item" index="index" collection="items"
+			separator="UNION ALL">
+			SELECT get_sequences('e_third_ret_orderitem'), SYSDATE, 
+			#{aftercode, javaType=String, jdbcType=VARCHAR}, 
+			#{item.sku_code, javaType=String, jdbcType=VARCHAR}, 
+			#{item.item_return_num, javaType=Integer, jdbcType=INTEGER}, 
+			#{item.item_trade_price, javaType=Double, jdbcType=NUMERIC}, 
+			#{item.item_amount_subtotal, javaType=Double, jdbcType=NUMERIC}, 
+			#{item.after_code, javaType=String, jdbcType=VARCHAR}, 
+			#{item.trade_item_id, javaType=Integer, jdbcType=INTEGER}, 
+			#{brand, javaType=String, jdbcType=VARCHAR} FROM dual
+		</foreach>
+	</insert>
+	
+	<select id="executePThirdBackOrder" statementType="CALLABLE">
+		{call p_deal_e_third_ret_order(#{brand, mode=IN})}
+	</select>
+	
+	<select id="queryOrderSendStatusPropel" resultType="Order">
+		SELECT t.platformno AS ordersn, t.distrtype_name AS distrtype,
+			c.code AS shipcode, c.name AS shipname, t.fastno AS logisticcode
+		FROM e_order t, c_expresscompany c
+ 		WHERE t.c_expresscompany_id = c.id
+		AND t.e_status = 5
+		AND t.ispropel = 0
+		<if test="brand != null and brand != ''">
+	 		AND t.brand = #{brand}
+	 	</if>
+	 	<if test="brand == null or brand == ''">
+	 		AND t.brand IS NULL
+	 	</if>
+		AND rownum <![CDATA[ <= #{count} ]]>
+	</select>
+	
+	<update id="updateOrderSendStatusPropelStatus">
+		UPDATE e_order t SET t.ispropel = 1 WHERE t.platformno IN
+		<foreach item="order" index="index" collection="orders"
+				open="(" separator="," close=")">
+			#{order.trade_code, javaType=String, jdbcType=VARCHAR}
+		</foreach>
+	</update>
+	
+	<select id="queryBackOrderInStatusPropel" resultType="ReturnOrder">
+		SELECT h.docno AS returnOrdersn
+		FROM (SELECT t.docno,rownum rn
+			FROM e_retorder t 
+			WHERE t.status = 2 
+			AND t.e_order_id IS NOT NULL
+			<if test="brand != null and brand != ''">
+		 		AND t.brand = #{brand}
+		 	</if>
+		 	<if test="brand == null or brand == ''">
+		 		AND t.brand IS NULL
+		 	</if>
+			AND t.ispropel = 'N') h
+		where h.rn <![CDATA[ <= #{count} ]]>
+	</select>
+	
+	<update id="updateBackOrderInStatusPropelStatus">
+		UPDATE e_retorder t SET t.ispropel = 'Y'
+		WHERE t.docno IN 
+		<foreach item="order" index="index" collection="orders" 
+				open="(" separator="," close=")">
+			#{order.after_code, javaType=String, jdbcType=VARCHAR}
+		</foreach>
+	</update>
+	
+</mapper>

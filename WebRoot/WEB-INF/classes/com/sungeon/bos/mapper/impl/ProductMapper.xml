@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sungeon.bos.mapper.IProductMapper">
+
+	<select id="queryProductBySku" parameterType="String"
+		resultType="SKUID">
+		SELECT t.m_product_id AS productid, t.id AS skuid,
+			t.m_attributesetinstance_id AS asiid, p.pricelist
+		FROM m_product_alias t, m_product p
+		WHERE t.m_product_id = p.id 
+		AND t.no = #{sku}
+	</select>
+	
+	<resultMap type="Product" id="ProductMap">
+		<result property="productCode" column="product" />
+		<result property="productName" column="productname" />
+		<result property="brandCode" column="brand" />
+		<result property="classCode" column="classes" />
+		<result property="pricelist" column="pricelist" />
+		<collection property="skus" ofType="SKU">
+			<result property="sku" column="sku" />
+			<result property="colorCode" column="colorcode" />
+			<result property="colorName" column="colorname" />
+			<result property="sizeCode" column="sizecode" />
+			<result property="sizeName" column="sizename" />
+		</collection>
+	</resultMap>
+	
+	<select id="queryProduct" resultMap="ProductMap">
+		SELECT t.name AS product, t.value AS productname, m1.attribcode AS brand,
+			 m2.attribcode AS classes, t.pricelist, a.no AS sku, s.value1_code AS colorcode,
+			 s.value1 AS colorname, s.value2_code AS sizecode, s.value2 AS sizename
+		FROM m_product t, m_product_alias a, m_dim m1, m_dim m2, m_attributesetinstance s
+ 		WHERE t.id = a.m_product_id
+	 	AND t.m_dim1_id = m1.id(+)
+	 	AND t.m_dim4_id = m2.id(+)
+	 	AND a.m_attributesetinstance_id = s.id
+	 	AND t.id IN (SELECT w.id
+					FROM (SELECT p.id FROM m_product p ORDER BY p.modifieddate DESC) w
+					WHERE rownum BETWEEN ${beg} AND ${end})
+	</select>
+
+	<select id="queryStorage" resultType="Storage">
+		SELECT h.* 
+		FROM (SELECT rownum AS no, w.* 
+			FROM (SELECT a.id AS skuid, a.no AS sku, t.id AS productid, 
+					t.name AS product, s.id AS storeid, s.code AS store, 
+					f.qty, f.qtycan
+				FROM m_product t, m_product_alias a, v_fa_storage f, 
+					c_store s
+				WHERE t.id = a.m_product_id
+				AND a.id = f.m_productalias_id
+				AND s.id = f.c_store_id
+ 				<if test="null != storeid and storeid > 0">
+ 					AND f.c_store_id = #{storeid}
+ 				</if>
+				ORDER BY f.modifieddate DESC) w) h 
+		WHERE h.no BETWEEN #{beg} AND #{end}
+	</select>
+	
+	<insert id="saveProductBatch">
+		INSERT INTO oto_productinfo_check(id, online_id, procode, brand)
+		<foreach collection="lists" index="index" item="pro" 
+			separator="UNION ALL">
+			SELECT get_sequences('oto_productinfo_check'),
+			#{pro.goods_id}, #{pro.goods_code}, #{brand}
+			FROM dual
+			WHERE NOT EXISTS(SELECT 1
+				FROM oto_productinfo_check o
+				WHERE o.online_id = #{pro.goods_id})
+		</foreach>		
+	</insert>
+	
+	<select id="executePotoProductInfoCheck" statementType="CALLABLE">
+		{call p_deal_oto_productinfo_check}
+	</select>
+	
+	<select id="queryProductPropel" resultMap="ProductMap" statementType="STATEMENT">
+		SELECT h.*
+		FROM (SELECT rownum AS rn, w.*
+			  FROM (SELECT t.name AS product, t.value AS productname, m1.attribcode AS brand,
+					m2.attribcode AS classes, t.pricelist, a.no AS sku,
+					s.value1_code AS colorcode, s.value1 AS colorname,
+					s.value2_code AS sizecode, s.value2 AS sizename
+					FROM m_product t, m_product_alias a, m_dim m1, m_dim m2,
+							 m_attributesetinstance s, e_third_time x
+				 	WHERE t.id = a.m_product_id
+					 AND t.${dimbrand} = m1.id(+)
+					 AND t.${dimclass} = m2.id(+)
+					 AND t.isonline = 'Y'
+					 AND a.m_attributesetinstance_id = s.id
+					 AND x.TYPE = 'ProductPropelTime'
+					 AND t.modifieddate >= x.propel_time
+	              	 AND t.modifieddate <![CDATA[ < ${now}]]>
+					 <if test="brand != null and brand != ''">
+		 				AND x.brand = '${brand}'
+		 			 </if>
+					 <if test="brand == null or brand == ''">
+					 	AND x.brand IS NULL
+					 </if>
+				 	ORDER BY t.modifieddate DESC) w) h
+ 		WHERE h.rn BETWEEN ${beg} AND ${end}
+	</select>
+	
+	<delete id="clearStorageLogPropel">
+		DELETE FROM e_third_upload_storage_log t
+		<if test="brand != null and brand != ''">
+			WHERE t.brand = #{brand}
+		</if>
+		<if test="brand == null or brand == ''">
+		 	WHERE t.brand IS NULL
+		</if>
+	</delete>
+	
+	<select id="queryStoragePropel" resultType="Storage">
+		SELECT h.skuid, h.productid, h.sku, h.qty, h.qtycan
+		FROM (SELECT rownum AS rn, w.skuid, w.productid, w.sku, w.qty, w.qtycan
+			  FROM (SELECT t.skuid, t.productid, t.sku_no AS sku, t.qty, t.qtycan
+					FROM e_third_storage t, e_third_time x
+              		WHERE x.TYPE = 'StoragePropelTime'
+	              	<if test="brand != null and brand != ''">
+		 				AND x.brand = #{brand}
+		 			</if>
+					<if test="brand == null or brand == ''">
+					 	AND x.brand IS NULL
+					 </if>
+	              	AND t.modifieddate >= x.propel_time
+	              	AND t.modifieddate <![CDATA[ < #{now}]]>
+					ORDER BY t.modifieddate DESC) w
+			  ) h
+ 		WHERE h.rn BETWEEN #{beg} AND #{end}
+	</select>
+	
+	<insert id="insertStoragePropelLog">
+		INSERT INTO e_third_upload_storage_log
+		(id, creationdate, store, m_product_id, m_productalias_id, sku, 
+		QTY, qtycan, issuccess, brand)
+		<foreach item="sto" index="index" collection="storages" separator="UNION ALL">
+			SELECT get_sequences('e_third_upload_storage_log'), SYSDATE,
+			#{sto.store_code, javaType=String, jdbcType=VARCHAR},
+			#{sto.productid, javaType=Integer, jdbcType=INTEGER},
+			#{sto.skuid, javaType=Integer, jdbcType=INTEGER},
+			#{sto.sku_code, javaType=String, jdbcType=VARCHAR},
+			#{sto.stock_total, javaType=INTEGER, jdbcType=INTEGER},
+			#{sto.stock_sale, javaType=INTEGER, jdbcType=INTEGER}, 
+			'Y', #{brand} FROM dual
+		</foreach>
+	</insert>
+	
+	<select id="queryStoreStoragePropel" resultType="Storage">
+	  	SELECT *
+		FROM (SELECT rownum rn, w.code AS store, w.no AS sku, w.m_productalias_id AS skuid,
+				w.m_product_id AS productid, w.qty, w.qtyvalid AS qtycan
+			  FROM (SELECT t.code, v.m_productalias_id, v.m_product_id, m.no, 
+			  			v.qty, v.qtyvalid
+					FROM c_store t, v_fa_storage v, m_product_alias m, e_third_time x
+					WHERE v.m_productalias_id = m.id
+					AND v.c_store_id = t.id
+					AND t.is_wei_storage = 'Y'
+					AND x.TYPE = 'StoreStoragePropelTime'
+					<if test="brand != null and brand != ''">
+		 				AND x.brand = #{brand}
+		 			</if>
+					<if test="brand == null or brand == ''">
+					 	AND x.brand IS NULL
+					 </if>
+					AND v.modifieddate > x.propel_time
+					AND t.modifieddate <![CDATA[ < #{now}]]>
+					ORDER BY v.modifieddate) w) h
+ 		WHERE h.rn BETWEEN #{beg} AND #{end}
+	</select>
+
+</mapper>

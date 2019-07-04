@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sungeon.bos.mapper.IBaseMapper">
+
+	<select id="getNewID" parameterType="String" resultType="Integer">
+		SELECT get_sequences(#{tablename}) FROM dual
+	</select>
+
+	<select id="getNewDocno" parameterType="String" resultType="String">
+		SELECT get_sequenceno(#{seqname}, 37) FROM dual
+	</select>
+	
+	<select id="getParamValue" resultType="String">
+		SELECT ad_param_value(37, #{name}, NULL) FROM dual
+	</select>
+
+	<select id="queryStore" parameterType="String" resultType="Store">
+		SELECT t.id, t.code, t.name, c.id AS customerid, 
+		c.code AS customercode, c.name AS customername
+		FROM c_store t, c_customer c
+		<where>
+			<if test="store != null">
+				t.code = #{store}
+			</if>
+			AND t.c_customer_id = c.id
+			AND rownum = 1
+		</where>
+	</select>
+
+	<select id="queryPayway" parameterType="String" resultType="Payway">
+		SELECT t.id, t.code, t.name FROM c_payway t WHERE t.code = #{payway}
+	</select>
+	
+	<select id="queryVIPType" parameterType="String" resultType="VIPType">
+		SELECT t.id, t.code, t.name FROM c_viptype t WHERE t.code = #{viptype}
+	</select>
+	
+	<update id="initSQL" parameterType="String" statementType="STATEMENT">
+		${sql}
+	</update>
+	
+	<select id="queryThirdTimeId" resultType="Integer">
+		SELECT t.id FROM e_third_time t
+		WHERE t.TYPE = #{type, javaType=String, jdbcType=VARCHAR}
+	</select>
+	
+	<select id="queryThirdTime" resultType="String">
+		SELECT t.propel_time FROM e_third_time t
+		WHERE t.TYPE = #{type, javaType=String, jdbcType=VARCHAR}
+	</select>
+	
+	<insert id="initThirdTime" keyProperty="id">
+		<selectKey keyProperty="id" order="BEFORE" resultType="int">
+			SELECT get_sequences('e_third_time') AS id FROM dual
+		</selectKey>
+		INSERT INTO e_third_time(id, TYPE, propel_time, remark)
+		VALUES(#{id}, #{type, javaType=String, jdbcType=VARCHAR},
+     	to_date('2019-01-01 08:00:00', 'yyyy-mm-dd hh24:mi:ss'), 
+     	<choose>
+     		<when test="type == 'StoragePropelTime'">
+     			'推送库存时间'
+     		</when>
+     		<when test="type == 'StoreStoragePropelTime'">
+   				'推送门店库存时间'
+   			</when>
+   			<when test="type == 'ProductPropelTime'">
+				'商品推送时间'
+ 			</when>
+ 			<otherwise>
+ 				'推送时间'
+ 			</otherwise>
+     	</choose>)
+	</insert>
+	
+	<insert id="insertThirdTime" parameterType="ThirdTime" keyProperty="id">
+		<selectKey keyProperty="id" order="BEFORE" resultType="Integer">
+			SELECT get_sequences('e_third_time') AS id FROM dual
+		</selectKey>
+		INSERT INTO e_third_time(id, TYPE, propel_time, remark)
+		VALUES(#{id}, #{type, javaType=String, jdbcType=VARCHAR},
+     	to_date(#{time}, 'yyyy-mm-dd hh24:mi:ss'), 
+     	#{description, javaType=String, jdbcType=VARCHAR})
+	</insert>
+	
+	<update id="updateThirdTime">
+		UPDATE e_third_time t SET t.propel_time = #{date} 
+		WHERE t.type = #{type}
+	</update>
+	
+	<select id="queryScheduleJobs" resultType="ScheduleJob">
+		SELECT t.id, t.jobname, t.groupname, t.status, t.cronexpression,
+			 t.description
+		FROM e_schedulejob t
+		<if test="groupName != 'DEFAULT'">
+			WHERE t.groupname = #{groupName}
+		</if>
+	</select>
+	
+	<select id="queryScheduleJob" parameterType="String" resultType="ScheduleJob">
+		SELECT t.id, t.jobname, t.groupname, t.status, t.cronexpression, 
+			t.description
+		FROM e_schedulejob t
+		WHERE t.jobname = #{jobName}
+		AND t.groupname = #{groupName}
+	</select>
+	
+	<select id="queryScheduleJobById" parameterType="Integer" resultType="ScheduleJob">
+		SELECT t.id, t.jobname, t.groupname, t.status, t.cronexpression, 
+			t.description
+		FROM e_schedulejob t
+		WHERE t.id = #{jobId}
+	</select>
+	
+	<update id="updateScheduleJob">
+		UPDATE e_schedulejob t 
+		SET t.status = #{job.status},
+			t.jobname = #{job.jobName},
+			t.groupname = #{job.groupName},
+			t.cronexpression = #{job.cronExpression}, 
+			t.description = #{job.description}
+		WHERE t.id = #{job.id}
+	</update>
+	
+	<select id="testProcedure" statementType="CALLABLE">
+		{call test_procedure(#{id, mode=IN, jdbcType=INTEGER},
+			#{code, mode=OUT, jdbcType=INTEGER}, 
+			#{message, mode=OUT, jdbcType=VARCHAR})}
+	</select>
+	
+</mapper>
