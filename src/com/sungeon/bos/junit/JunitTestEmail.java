@@ -4,7 +4,6 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
@@ -21,7 +20,6 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
-import org.springframework.ui.velocity.VelocityEngineFactoryBean;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer;
 
 import freemarker.template.Template;
@@ -86,20 +84,15 @@ public class JunitTestEmail {
 
 	@Test
 	public void sendEmailByVelocity() throws MessagingException {
-		VelocityEngineFactoryBean velocityEngine = new VelocityEngineFactoryBean();
-		Properties props = new Properties();
-		props.setProperty("resource.loader", "class");
-		props.setProperty("class.resource.loader.class", ClassPathResource.class.getName());
-		velocityEngine.setVelocityProperties(props);
-
 		Map<String, Object> modal = new HashMap<String, Object>();
 		modal.put("name", "薛小强");
 		modal.put("text", "这是一个用Velocity生成的模板");
 		// 使用VelocityEngineUtils将Velocity模板与模型数据合并成String
-		String emailText = "<!DOCTYPE html><html><body><img src='cid:logo'><h4>Hello ${name}</h4><h3>${text}</h3></body></html>";// VelocityEngineUtils.mergeTemplateIntoString(velocityEngine,
-																																	// "emailTemplate.vm",
-																																	// "UTF-8",
-																																	// modal);
+		String emailText = "<!DOCTYPE html><html><body><img src='cid:logo'><h4>Hello ${name}</h4><h3>${text}</h3></body></html>";
+		// VelocityEngineUtils.mergeTemplateIntoString(velocityEngine,
+		// "emailTemplate.vm",
+		// "UTF-8",
+		// modal);
 
 		MimeMessage message = mailSender.createMimeMessage();
 		// 第三个参数设置编码，否则如果有汉字会出现乱码问题
