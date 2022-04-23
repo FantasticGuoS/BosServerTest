@@ -12,7 +12,7 @@
 		<webVersion>3.0</webVersion>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<cxf.version>3.1.4</cxf.version>
-		<org.springframework.version>4.3.20.RELEASE</org.springframework.version>
+		<org.springframework.version>5.3.19</org.springframework.version>
 		<jackson.version>2.9.9</jackson.version>
 	</properties>
 
